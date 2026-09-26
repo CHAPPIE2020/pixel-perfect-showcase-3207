@@ -5,8 +5,12 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Video Speed Reader design system — dark, near-black surfaces with a
- * violet accent. All colors are oklch tokens; never hardcode colors in JSX.
+ * Video Speed Reader design system — "Sunlit Vault".
+ * The reference artwork is used as the page background exactly as supplied
+ * (no tint, blur or overlay). UI sits on top of it: deep-umber text for
+ * contrast against the bright scene, bronze actions, and frosted cream
+ * panels for anything text-heavy. All colors are oklch tokens; never
+ * hardcode colors in JSX.
  */
 
 @theme inline {
@@ -39,33 +43,38 @@
 }
 
 :root {
+  color-scheme: light;
   --radius: 0.75rem;
-  --background: oklch(0.15 0.017 285);
-  --foreground: oklch(0.97 0.005 285);
-  --card: oklch(0.19 0.02 285);
-  --card-foreground: oklch(0.97 0.005 285);
-  --popover: oklch(0.19 0.02 285);
-  --popover-foreground: oklch(0.97 0.005 285);
-  --primary: oklch(0.62 0.21 293);
-  --primary-foreground: oklch(0.99 0.002 285);
-  --secondary: oklch(0.24 0.023 285);
-  --secondary-foreground: oklch(0.97 0.005 285);
-  --muted: oklch(0.24 0.023 285);
-  --muted-foreground: oklch(0.7 0.02 285);
-  --accent: oklch(0.42 0.14 293);
-  --accent-foreground: oklch(0.98 0.003 285);
-  --destructive: oklch(0.62 0.21 22);
-  --destructive-foreground: oklch(0.98 0.003 285);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.62 0.21 293);
 
-  --gradient-hero: radial-gradient(
-    ellipse 80% 60% at 50% -10%,
-    oklch(0.45 0.18 293 / 45%),
-    transparent 70%
-  );
-  --shadow-glow: 0 0 60px oklch(0.62 0.21 293 / 22%);
+  /* Warm cream surfaces + deep umber ink */
+  --background: oklch(0.96 0.025 88);
+  --foreground: oklch(0.22 0.04 65);
+  --card: oklch(0.98 0.02 90 / 88%);
+  --card-foreground: oklch(0.22 0.04 65);
+  --popover: oklch(0.98 0.02 90);
+  --popover-foreground: oklch(0.22 0.04 65);
+
+  /* Bronze, from the vault's shadowed metal ring */
+  --primary: oklch(0.42 0.08 60);
+  --primary-foreground: oklch(0.98 0.02 90);
+  --secondary: oklch(0.92 0.035 85);
+  --secondary-foreground: oklch(0.22 0.04 65);
+  --muted: oklch(0.92 0.035 85);
+  --muted-foreground: oklch(0.3 0.045 65);
+  --accent: oklch(0.9 0.045 85);
+  --accent-foreground: oklch(0.22 0.04 65);
+
+  /* Spacesuit orange, used sparingly */
+  --spark: oklch(0.7 0.14 50);
+
+  --destructive: oklch(0.5 0.19 30);
+  --destructive-foreground: oklch(0.98 0.02 90);
+  --border: oklch(0.22 0.04 65 / 16%);
+  --input: oklch(0.22 0.04 65 / 22%);
+  --ring: oklch(0.55 0.1 60);
+
+  --page-image: url("./assets/vault-background.jpg");
+  --shadow-glow: 0 10px 30px -10px oklch(0.3 0.06 60 / 55%);
 }
 
 @layer base {
@@ -75,6 +84,11 @@
 
   body {
     background-color: var(--color-background);
+    background-image: var(--page-image);
+    background-size: cover;
+    background-position: center top;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
@@ -82,11 +96,39 @@
 }
 
 @utility hero-glow {
-  background-image: var(--gradient-hero);
+  /* The page background image shows through here unaltered. */
+  background: transparent;
 }
 
 @utility glow-shadow {
   box-shadow: var(--shadow-glow);
+}
+
+/* Frosted-ice panels: cards and the sticky header blur what's behind them. */
+@layer components {
+  .bg-card {
+    box-shadow: 0 16px 40px -20px oklch(0.2 0.04 60 / 55%);
+  }
+
+  /* Header and footer get a solid cream band so their text never sits on
+     a busy part of the picture. The picture itself is not modified. */
+  header,
+  footer {
+    background-color: oklch(0.96 0.025 88 / 92%);
+  }
+
+  ::selection {
+    background: var(--spark);
+    color: oklch(0.15 0.02 60);
+  }
+}
+
+/* Text that sits directly on the artwork: solid dark ink, a touch heavier,
+   no shadows or glows (those read as blur). Unlayered so it wins over the
+   muted-text utility on these few lines. */
+.hero-glow > div > p {
+  color: var(--foreground);
+  font-weight: 500;
 }
 
 @utility fade-up {
