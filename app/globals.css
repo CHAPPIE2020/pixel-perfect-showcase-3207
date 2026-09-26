@@ -40,6 +40,12 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-status-idle: var(--status-idle);
+  --color-status-idle-foreground: var(--status-idle-foreground);
+  --color-status-active: var(--status-active);
+  --color-status-active-foreground: var(--status-active-foreground);
+  --color-status-done: var(--status-done);
+  --color-status-done-foreground: var(--status-done-foreground);
 }
 
 :root {
@@ -66,6 +72,14 @@
 
   /* Spacesuit orange, used sparingly */
   --spark: oklch(0.7 0.14 50);
+
+  /* Job status badges (M1 /upload): grey = queued, blue = transcribing, green = done */
+  --status-idle: oklch(0.9 0.012 80);
+  --status-idle-foreground: oklch(0.36 0.02 70);
+  --status-active: oklch(0.9 0.05 240);
+  --status-active-foreground: oklch(0.36 0.1 250);
+  --status-done: oklch(0.9 0.07 150);
+  --status-done-foreground: oklch(0.34 0.09 150);
 
   --destructive: oklch(0.5 0.19 30);
   --destructive-foreground: oklch(0.98 0.02 90);

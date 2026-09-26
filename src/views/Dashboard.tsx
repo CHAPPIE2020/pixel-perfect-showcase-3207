@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 
@@ -12,8 +13,10 @@ export function DashboardPage({ email }: { email: string | undefined }) {
             className="fade-up mt-6 rounded-2xl border border-border bg-card p-6 text-muted-foreground"
             style={{ animationDelay: "100ms" }}
           >
-            Your dashboard is coming soon. Upload functionality will be added in the next
-            milestone.
+            Ready to transcribe a video?{" "}
+            <Link href="/upload" className="font-medium text-primary hover:underline">
+              Go to Upload / 前往上傳
+            </Link>
           </div>
         </div>
       </main>

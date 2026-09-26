@@ -35,6 +35,12 @@ export function SiteHeader() {
               >
                 Dashboard
               </Link>
+              <Link
+                href="/upload"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Upload / 上傳
+              </Link>
               <button
                 onClick={handleSignOut}
                 className="rounded-lg border border-border px-4 py-2 font-medium transition-colors hover:bg-secondary"
