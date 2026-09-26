@@ -1,44 +1,30 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router";
-import { supabase } from "@/integrations/supabase/client";
-import { SiteHeader } from "@/components/SiteHeader";
-import { usePageMeta } from "@/hooks/usePageMeta";
+"use client";
 
-export function SignUpPage() {
-  usePageMeta({
-    title: "Create your account — Video Speed Reader",
-    description: "Create a Video Speed Reader account and start turning videos into transcripts.",
-    ogDescription: "Sign up with email and password to start transcribing your videos.",
-  });
-  const navigate = useNavigate();
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { SiteHeader } from "@/components/SiteHeader";
+
+export function SignInPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
-    setNotice(null);
     setBusy(true);
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: window.location.origin },
-    });
+    const { error: signInError } = await createClient().auth.signInWithPassword({ email, password });
     setBusy(false);
-    if (signUpError) {
-      setError(signUpError.message);
+    if (signInError) {
+      setError(signInError.message);
       return;
     }
-    if (data.session) {
-      navigate("/app", { replace: true });
-      return;
-    }
-    setNotice(
-      "Account created! Check your inbox and click the confirmation link, then sign in. / 帳號已建立！請到信箱點擊確認連結，完成後再登入。",
-    );
+    router.replace("/app");
+    router.refresh();
   }
 
   return (
@@ -46,9 +32,9 @@ export function SignUpPage() {
       <SiteHeader />
       <main className="hero-glow flex flex-1 items-center justify-center px-5 py-16">
         <div className="fade-up w-full max-w-sm rounded-2xl border border-border bg-card p-7">
-          <h1 className="text-2xl font-semibold tracking-tight">Sign up / 註冊</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Sign in / 登入</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Create an account with your email and a password.
+            Welcome back. Enter your email and password.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -72,26 +58,25 @@ export function SignUpPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 outline-none focus:border-ring"
-                placeholder="At least 6 characters"
+                placeholder="••••••••"
               />
             </label>
 
             {error ? <p className="text-sm text-destructive">{error}</p> : null}
-            {notice ? <p className="text-sm text-primary">{notice}</p> : null}
 
             <button
               type="submit"
               disabled={busy}
               className="w-full rounded-lg bg-primary px-4 py-2.5 font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
             >
-              {busy ? "Creating account…" : "Create account"}
+              {busy ? "Signing in…" : "Sign in"}
             </button>
           </form>
 
           <p className="mt-5 text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <Link to="/signin" className="text-primary hover:underline">
-              Sign in
+            No account yet?{" "}
+            <Link href="/sign-up" className="text-primary hover:underline">
+              Sign up
             </Link>
           </p>
         </div>

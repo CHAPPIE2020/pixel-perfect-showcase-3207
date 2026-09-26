@@ -1,7 +1,6 @@
-import { Link } from "react-router";
+import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import { usePageMeta } from "@/hooks/usePageMeta";
 
 const features = [
   {
@@ -22,14 +21,6 @@ const features = [
 ];
 
 export function LandingPage() {
-  usePageMeta({
-    title: "Video Speed Reader — 上傳影片，三分鐘內拿到逐字稿",
-    description:
-      "Upload your video and get a clean, high-accuracy transcript in three minutes. Built for creators, educators, and engineers.",
-    ogTitle: "Video Speed Reader — transcripts in three minutes",
-    ogDescription: "Upload your video and get a clean, high-accuracy transcript in three minutes.",
-  });
-
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
@@ -60,7 +51,7 @@ export function LandingPage() {
             </p>
             <div className="fade-up mt-10" style={{ animationDelay: "240ms" }}>
               <Link
-                to="/signup"
+                href="/sign-up"
                 className="glow-shadow inline-flex items-center rounded-xl bg-primary px-6 py-3 font-medium text-primary-foreground transition-opacity hover:opacity-90"
               >
                 Get started free

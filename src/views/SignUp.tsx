@@ -1,32 +1,42 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router";
-import { supabase } from "@/integrations/supabase/client";
-import { SiteHeader } from "@/components/SiteHeader";
-import { usePageMeta } from "@/hooks/usePageMeta";
+"use client";
 
-export function SignInPage() {
-  usePageMeta({
-    title: "Sign in — Video Speed Reader",
-    description: "Sign in to Video Speed Reader with your email and password.",
-    ogDescription: "Sign in to your Video Speed Reader account.",
-  });
-  const navigate = useNavigate();
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { SiteHeader } from "@/components/SiteHeader";
+
+export function SignUpPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
+    setNotice(null);
     setBusy(true);
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error: signUpError } = await createClient().auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: window.location.origin },
+    });
     setBusy(false);
-    if (signInError) {
-      setError(signInError.message);
+    if (signUpError) {
+      setError(signUpError.message);
       return;
     }
-    navigate("/app", { replace: true });
+    if (data.session) {
+      router.replace("/app");
+      router.refresh();
+      return;
+    }
+    setNotice(
+      "Account created! Check your inbox and click the confirmation link, then sign in. / 帳號已建立！請到信箱點擊確認連結，完成後再登入。",
+    );
   }
 
   return (
@@ -34,9 +44,9 @@ export function SignInPage() {
       <SiteHeader />
       <main className="hero-glow flex flex-1 items-center justify-center px-5 py-16">
         <div className="fade-up w-full max-w-sm rounded-2xl border border-border bg-card p-7">
-          <h1 className="text-2xl font-semibold tracking-tight">Sign in / 登入</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Sign up / 註冊</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Welcome back. Enter your email and password.
+            Create an account with your email and a password.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -60,25 +70,26 @@ export function SignInPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 outline-none focus:border-ring"
-                placeholder="••••••••"
+                placeholder="At least 6 characters"
               />
             </label>
 
             {error ? <p className="text-sm text-destructive">{error}</p> : null}
+            {notice ? <p className="text-sm text-primary">{notice}</p> : null}
 
             <button
               type="submit"
               disabled={busy}
               className="w-full rounded-lg bg-primary px-4 py-2.5 font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
             >
-              {busy ? "Signing in…" : "Sign in"}
+              {busy ? "Creating account…" : "Create account"}
             </button>
           </form>
 
           <p className="mt-5 text-sm text-muted-foreground">
-            No account yet?{" "}
-            <Link to="/signup" className="text-primary hover:underline">
-              Sign up
+            Already have an account?{" "}
+            <Link href="/sign-in" className="text-primary hover:underline">
+              Sign in
             </Link>
           </p>
         </div>

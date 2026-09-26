@@ -73,7 +73,7 @@
   --input: oklch(0.22 0.04 65 / 22%);
   --ring: oklch(0.55 0.1 60);
 
-  --page-image: url("./assets/vault-background.jpg");
+  --page-image: url("../src/assets/vault-background.jpg");
   --shadow-glow: 0 10px 30px -10px oklch(0.3 0.06 60 / 55%);
 }
 
