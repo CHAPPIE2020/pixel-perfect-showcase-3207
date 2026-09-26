@@ -36,7 +36,9 @@ export function SignUpPage() {
       navigate("/app", { replace: true });
       return;
     }
-    setNotice("Account created. You can sign in now.");
+    setNotice(
+      "Account created! Check your inbox and click the confirmation link, then sign in. / 帳號已建立！請到信箱點擊確認連結，完成後再登入。",
+    );
   }
 
   return (
