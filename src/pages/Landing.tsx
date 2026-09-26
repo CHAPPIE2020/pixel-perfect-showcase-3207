@@ -1,28 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link } from "react-router";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-
-export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Video Speed Reader — 上傳影片，三分鐘內拿到逐字稿" },
-      {
-        name: "description",
-        content:
-          "Upload your video and get a clean, high-accuracy transcript in three minutes. Built for creators, educators, and engineers.",
-      },
-      { property: "og:title", content: "Video Speed Reader — transcripts in three minutes" },
-      {
-        property: "og:description",
-        content:
-          "Upload your video and get a clean, high-accuracy transcript in three minutes.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
-  component: LandingPage,
-});
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const features = [
   {
@@ -42,7 +21,15 @@ const features = [
   },
 ];
 
-function LandingPage() {
+export function LandingPage() {
+  usePageMeta({
+    title: "Video Speed Reader — 上傳影片，三分鐘內拿到逐字稿",
+    description:
+      "Upload your video and get a clean, high-accuracy transcript in three minutes. Built for creators, educators, and engineers.",
+    ogTitle: "Video Speed Reader — transcripts in three minutes",
+    ogDescription: "Upload your video and get a clean, high-accuracy transcript in three minutes.",
+  });
+
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />

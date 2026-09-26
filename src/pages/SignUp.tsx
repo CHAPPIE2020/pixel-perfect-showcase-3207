@@ -1,29 +1,15 @@
 import { useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/SiteHeader";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
-export const Route = createFileRoute("/signup")({
-  head: () => ({
-    meta: [
-      { title: "Create your account — Video Speed Reader" },
-      {
-        name: "description",
-        content: "Create a Video Speed Reader account and start turning videos into transcripts.",
-      },
-      { property: "og:title", content: "Create your account — Video Speed Reader" },
-      {
-        property: "og:description",
-        content: "Sign up with email and password to start transcribing your videos.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
-  component: SignUpPage,
-});
-
-function SignUpPage() {
+export function SignUpPage() {
+  usePageMeta({
+    title: "Create your account — Video Speed Reader",
+    description: "Create a Video Speed Reader account and start turning videos into transcripts.",
+    ogDescription: "Sign up with email and password to start transcribing your videos.",
+  });
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -47,7 +33,7 @@ function SignUpPage() {
       return;
     }
     if (data.session) {
-      navigate({ to: "/app", replace: true });
+      navigate("/app", { replace: true });
       return;
     }
     setNotice("Account created. You can sign in now.");

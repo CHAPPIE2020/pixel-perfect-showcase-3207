@@ -22,3 +22,32 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+## Architecture
+
+Plain **Vite + React** single-page app with **React Router** for client-side routing.
+There is no server-side rendering and no Cloudflare/Wrangler config.
+
+| Path | Page |
+| --- | --- |
+| `/` | Landing page |
+| `/signin` (alias `/sign-in`) | Sign in |
+| `/signup` (alias `/sign-up`) | Sign up |
+| `/app` | Dashboard (requires sign-in, redirects to `/signin` otherwise) |
+
+- Routes are defined in `src/router.tsx`; pages live in `src/pages/`.
+- Auth is Supabase email + password, fully client-side (`src/integrations/supabase/client.ts`).
+
+## Build & deploy (Vercel)
+
+```sh
+npm run build   # vite build → dist/
+npm run preview # serve dist/ locally
+```
+
+`vercel.json` sets the Vite framework preset, `dist/` as the output directory,
+and a SPA fallback rewrite so deep links like `/app` are resolved client-side.
+
+Required build-time env vars (already in `.env`): `VITE_SUPABASE_URL`,
+`VITE_SUPABASE_PUBLISHABLE_KEY`.
+

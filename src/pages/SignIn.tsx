@@ -1,23 +1,15 @@
 import { useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/SiteHeader";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
-export const Route = createFileRoute("/signin")({
-  head: () => ({
-    meta: [
-      { title: "Sign in — Video Speed Reader" },
-      { name: "description", content: "Sign in to Video Speed Reader with your email and password." },
-      { property: "og:title", content: "Sign in — Video Speed Reader" },
-      { property: "og:description", content: "Sign in to your Video Speed Reader account." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
-  component: SignInPage,
-});
-
-function SignInPage() {
+export function SignInPage() {
+  usePageMeta({
+    title: "Sign in — Video Speed Reader",
+    description: "Sign in to Video Speed Reader with your email and password.",
+    ogDescription: "Sign in to your Video Speed Reader account.",
+  });
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,7 +26,7 @@ function SignInPage() {
       setError(signInError.message);
       return;
     }
-    navigate({ to: "/app", replace: true });
+    navigate("/app", { replace: true });
   }
 
   return (

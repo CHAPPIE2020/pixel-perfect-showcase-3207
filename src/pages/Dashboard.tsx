@@ -1,24 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { useAuthUser } from "@/components/RequireAuth";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
-export const Route = createFileRoute("/_authenticated/app")({
-  head: () => ({
-    meta: [
-      { title: "Dashboard — Video Speed Reader" },
-      { name: "description", content: "Your Video Speed Reader dashboard." },
-      { property: "og:title", content: "Dashboard — Video Speed Reader" },
-      { property: "og:description", content: "Your Video Speed Reader dashboard." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "robots", content: "noindex" },
-    ],
-  }),
-  component: AppShell,
-});
-
-function AppShell() {
-  const { user } = Route.useRouteContext();
+export function DashboardPage() {
+  const user = useAuthUser();
+  usePageMeta({
+    title: "Dashboard — Video Speed Reader",
+    description: "Your Video Speed Reader dashboard.",
+    robots: "noindex",
+  });
 
   return (
     <div className="flex min-h-screen flex-col">
