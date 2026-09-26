@@ -27,3 +27,8 @@ dist
 out/
 next-env.d.ts
 *.tsbuildinfo
+
+# Python worker (M1)
+worker/venv/
+__pycache__/
+*.pyc
