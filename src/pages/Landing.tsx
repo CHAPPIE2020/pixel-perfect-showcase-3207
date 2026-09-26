@@ -38,17 +38,23 @@ export function LandingPage() {
         <section className="hero-glow relative overflow-hidden">
           <div className="mx-auto w-full max-w-4xl px-5 py-28 text-center sm:py-36">
             <p className="fade-up text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">
-              Video Speed Reader
+              Video → Transcript
             </p>
             <h1
               className="fade-up mt-6 text-4xl font-semibold leading-tight tracking-tight sm:text-6xl"
               style={{ animationDelay: "80ms" }}
             >
-              上傳影片，三分鐘內拿到逐字稿。
+              Video Speed Reader
             </h1>
             <p
               className="fade-up mx-auto mt-5 max-w-2xl text-lg text-muted-foreground"
               style={{ animationDelay: "160ms" }}
+            >
+              上傳影片，三分鐘內拿到逐字稿。
+            </p>
+            <p
+              className="fade-up mx-auto mt-2 max-w-2xl text-muted-foreground"
+              style={{ animationDelay: "200ms" }}
             >
               Upload your video, get a clean transcript in three minutes.
             </p>
