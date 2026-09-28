@@ -2,6 +2,15 @@
 M1 worker: processes ONE job — downloads the video, runs Whisper,
 writes the TXT back to job_sessions.subtitle_txt_content.
 
+M2 adds credit metering (1 credit = 1 started minute of video):
+  * after claiming the job, compare the video's minutes to
+    profiles.credits_balance — if it's not enough, mark the job
+    'insufficient_credits' and stop BEFORE downloading / calling Whisper
+    (cheap yt-dlp probe first; ffprobe on the downloaded file if the source
+    doesn't expose a duration, e.g. direct CloudFront mp4s return "NA")
+  * on success, write a 'deduction' ledger row and lower the balance,
+    then flip the job to 'done'. Failed jobs cost nothing.
+
 Started by distributor.py (one Popen per pending job). Reads JOB_ID from env.
 Reads OPENAI_API_KEY / SUPABASE_URL / SUPABASE_SECRET_KEY from AWS Secrets
 Manager — the EC2's IAM instance profile grants `secretsmanager:GetSecretValue`
@@ -119,6 +128,63 @@ def split_chunks(mp3_path: Path, dest_dir: Path) -> list[Path]:
     return chunks
 
 
+def probe_duration_minutes_cheap(video_url: str) -> int | None:
+    """Duration in whole minutes (rounded up) WITHOUT downloading, or None when
+    the source doesn't expose it (yt-dlp prints "NA") or the probe fails."""
+    if not video_url.startswith(("http://", "https://")):
+        return None
+    try:
+        out = subprocess.check_output(
+            ["yt-dlp", "--print", "duration", "--no-warnings", "--no-playlist", video_url],
+            text=True,
+            timeout=30,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except (subprocess.SubprocessError, OSError):
+        return None
+    if not out or out.upper() == "NA":
+        return None
+    try:
+        seconds = float(out.splitlines()[-1])
+    except ValueError:
+        return None
+    return max(1, math.ceil(seconds / 60))  # a 61-second clip costs 2 credits
+
+
+def get_balance(user_id: str) -> float:
+    rows = db.table("profiles").select("credits_balance").eq("id", user_id).limit(1).execute().data
+    return float(rows[0]["credits_balance"]) if rows else 0.0
+
+
+def block_insufficient(job: dict, minutes: int, balance: float) -> None:
+    """Terminal state for a job the user can't afford. No Whisper call, no charge."""
+    update_job(job["id"], status="insufficient_credits")
+    db.table("credit_transactions").insert({
+        "user_id": job["user_id"],
+        "amount": 0,
+        "type": "deduction",
+        "description": f"Insufficient credits: video is {minutes} min, you have {int(balance)}",
+        "job_id": job["id"],
+    }).execute()
+    print(f"[{job['id']}] insufficient credits — video is {minutes} min, balance {balance:g} cr", flush=True)
+
+
+def charge_credits(job: dict, minutes: int) -> float:
+    """Ledger row first (source of truth), then the derived balance. Returns the new balance."""
+    db.table("credit_transactions").insert({
+        "user_id": job["user_id"],
+        "amount": -minutes,
+        "type": "deduction",
+        "description": f"Transcribed {minutes} min video",
+        "job_id": job["id"],
+    }).execute()
+    # Read-then-write (not atomic). Fine for M2: the distributor runs one worker per job
+    # and a user rarely has two jobs finishing in the same instant.
+    new_balance = max(0.0, get_balance(job["user_id"]) - minutes)
+    db.table("profiles").update({"credits_balance": new_balance}).eq("id", job["user_id"]).execute()
+    return new_balance
+
+
 def transcribe_chunk(chunk_path: Path, language: str) -> str:
     with open(chunk_path, "rb") as f:
         return openai_client.audio.transcriptions.create(
@@ -134,13 +200,33 @@ def main() -> None:
     job = get_job(job_id)
     session_id = job["current_session_id"]
 
+    # Claim first (the distributor already did pending → downloading; this
+    # keeps the job out of 'pending' even if anything below crashes).
     update_job(job_id, status="downloading")
+
+    # M2 credit check, stage 1: cheap duration probe (no download).
+    balance = get_balance(job["user_id"])
+    minutes = probe_duration_minutes_cheap(job["video_source_url"])
+    print(f"[{job_id}] duration probe: {minutes if minutes is not None else 'unknown'} min, "
+          f"credit check: balance {balance:g} cr", flush=True)
+    if minutes is not None and minutes > balance:
+        block_insufficient(job, minutes, balance)
+        return
+
     print(f"[{job_id}] downloading {job['video_source_url']}", flush=True)
 
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         video = download_video(job["video_source_url"], tmp_path)
         mp3 = to_mp3(video, tmp_path)
+
+        # M2 credit check, stage 2: the source had no duration → measure the file.
+        if minutes is None:
+            minutes = max(1, math.ceil(get_duration_seconds(mp3) / 60))
+            print(f"[{job_id}] ffprobe duration: {minutes} min", flush=True)
+            if minutes > balance:
+                block_insufficient(job, minutes, balance)
+                return
 
         update_job(job_id, status="transcribe")
         chunks = split_chunks(mp3, tmp_path)
@@ -151,9 +237,12 @@ def main() -> None:
         )
 
         update_session(session_id, subtitle_txt_content=full_text)
+        # M2: charge only now that the transcript is saved; then mark done.
+        new_balance = charge_credits(job, minutes)
         update_job(job_id, status="done")
 
-    print(f"[{job_id}] done — {len(full_text)} chars", flush=True)
+    print(f"[{job_id}] done — {len(full_text)} chars, charged {minutes} cr, "
+          f"balance now {new_balance:g} cr", flush=True)
 
 
 if __name__ == "__main__":
