@@ -46,6 +46,10 @@
   --color-status-active-foreground: var(--status-active-foreground);
   --color-status-done: var(--status-done);
   --color-status-done-foreground: var(--status-done-foreground);
+  --color-status-bonus: var(--status-bonus);
+  --color-status-bonus-foreground: var(--status-bonus-foreground);
+  --color-status-blocked: var(--status-blocked);
+  --color-status-blocked-foreground: var(--status-blocked-foreground);
 }
 
 :root {
@@ -80,6 +84,11 @@
   --status-active-foreground: oklch(0.36 0.1 250);
   --status-done: oklch(0.9 0.07 150);
   --status-done-foreground: oklch(0.34 0.09 150);
+  /* M2 credits: yellow = signup bonus, red = insufficient_credits (job blocked, not charged) */
+  --status-bonus: oklch(0.93 0.08 90);
+  --status-bonus-foreground: oklch(0.4 0.09 75);
+  --status-blocked: oklch(0.92 0.05 30);
+  --status-blocked-foreground: oklch(0.45 0.15 30);
 
   --destructive: oklch(0.5 0.19 30);
   --destructive-foreground: oklch(0.98 0.02 90);
