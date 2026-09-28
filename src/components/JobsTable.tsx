@@ -17,6 +17,11 @@ const STATUS_STYLES: Record<string, string> = {
   downloading: "bg-status-idle text-status-idle-foreground",
   transcribe: "bg-status-active text-status-active-foreground",
   done: "bg-status-done text-status-done-foreground",
+  insufficient_credits: "bg-status-blocked text-status-blocked-foreground",
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  insufficient_credits: "insufficient credits",
 };
 
 function truncate(text: string, max = 50) {
@@ -31,7 +36,7 @@ function StatusBadge({ status }: { status: string }) {
         STATUS_STYLES[status] ?? STATUS_STYLES["pending"],
       )}
     >
-      {status}
+      {STATUS_LABELS[status] ?? status}
     </span>
   );
 }

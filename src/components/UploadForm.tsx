@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 const inputClass =
@@ -12,11 +13,13 @@ export function UploadForm() {
   const [topic, setTopic] = useState("");
   const [language, setLanguage] = useState("zh");
   const [error, setError] = useState<string | null>(null);
+  const [needsCredits, setNeedsCredits] = useState(false);
   const [busy, setBusy] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
+    setNeedsCredits(false);
     setBusy(true);
     try {
       const res = await fetch("/api/jobs", {
@@ -24,6 +27,10 @@ export function UploadForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ video_source_url: videoUrl, topic: topic || null, language }),
       });
+      if (res.status === 402) {
+        setNeedsCredits(true);
+        return;
+      }
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         setError(body?.error ?? `Request failed (HTTP ${res.status})`);
@@ -77,6 +84,14 @@ export function UploadForm() {
         </select>
       </label>
 
+      {needsCredits ? (
+        <p className="text-sm text-destructive">
+          You don't have enough credits. / 點數不足。{" "}
+          <Link href="/credits" className="font-medium underline">
+            Buy credits / 購買點數
+          </Link>
+        </p>
+      ) : null}
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
       <button

@@ -18,8 +18,11 @@ export function CreditTiers({ tiers }: { tiers: CreditTier[] }) {
 
   // Baseline = the smallest pack. Bonus = how many extra credits a tier gives
   // per dollar compared to the baseline ($30 → 45 credits vs 30 at $1/credit = +50%).
-  const baseline = tiers.reduce((min, t) => (t.credits < min.credits ? t : min), tiers[0]);
-  const baselineCreditsPerUsd = baseline.credits / baseline.priceUsd;
+  const baseline = tiers.reduce<CreditTier | undefined>(
+    (min, t) => (!min || t.credits < min.credits ? t : min),
+    undefined,
+  );
+  const baselineCreditsPerUsd = baseline ? baseline.credits / baseline.priceUsd : 0;
 
   async function buy(productId: string) {
     setError(null);
@@ -49,9 +52,9 @@ export function CreditTiers({ tiers }: { tiers: CreditTier[] }) {
       <div className="grid gap-4 sm:grid-cols-3">
         {tiers.map((tier) => {
           const usdPerCredit = tier.priceUsd / tier.credits;
-          const bonusPct = Math.round(
-            (tier.credits / (tier.priceUsd * baselineCreditsPerUsd) - 1) * 100,
-          );
+          const bonusPct = baselineCreditsPerUsd
+            ? Math.round((tier.credits / (tier.priceUsd * baselineCreditsPerUsd) - 1) * 100)
+            : 0;
           return (
             <div key={tier.id} className="flex flex-col rounded-2xl border border-border bg-card p-6">
               <div className="flex items-start justify-between gap-2">

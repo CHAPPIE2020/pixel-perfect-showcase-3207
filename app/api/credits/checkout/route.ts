@@ -47,7 +47,7 @@ export async function POST(req: Request) {
       success_url: `${origin}/credits/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/credits?canceled=1`,
       client_reference_id: user.id,
-      customer_email: user.email ?? undefined,
+      ...(user.email ? { customer_email: user.email } : {}),
       metadata: {
         user_id: user.id,
         product_id: product.id,

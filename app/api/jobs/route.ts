@@ -31,7 +31,22 @@ export async function POST(req: Request) {
   const topic =
     typeof body.topic === "string" && body.topic.trim() ? body.topic.trim().slice(0, 500) : null;
 
-  // 3. Insert job + session with the Secret key. The user was authenticated
+  // 3. Fast credit floor (M2): reject when the balance is below 1 credit.
+  //    The precise "video minutes vs balance" check runs on the worker, which
+  //    knows the real duration (yt-dlp / ffprobe) before calling Whisper.
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("credits_balance")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (!profile || Number(profile.credits_balance) < 1) {
+    return NextResponse.json(
+      { error: "insufficient credits — please buy more at /credits" },
+      { status: 402 },
+    );
+  }
+
+  // 4. Insert job + session with the Secret key. The user was authenticated
   //    above; the Secret key bypasses RLS so we can create both rows and link
   //    them without extra policies.
   let admin;

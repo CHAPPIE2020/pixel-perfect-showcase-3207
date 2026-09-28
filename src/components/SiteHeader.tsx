@@ -1,13 +1,52 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { Coins } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useSession } from "@/hooks/useSession";
+
+// Reads the signed-in user's credit balance (RLS: own profile only). Re-reads on
+// every navigation and whenever something dispatches a "credits:changed" event
+// (e.g. the post-checkout success page once the webhook has landed).
+function useCreditBalance(userId: string | undefined) {
+  const pathname = usePathname();
+  const [balance, setBalance] = useState<number | null>(null);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    const bump = () => setTick((t) => t + 1);
+    window.addEventListener("credits:changed", bump);
+    return () => window.removeEventListener("credits:changed", bump);
+  }, []);
+
+  useEffect(() => {
+    if (!userId) {
+      setBalance(null);
+      return;
+    }
+    let active = true;
+    createClient()
+      .from("profiles")
+      .select("credits_balance")
+      .eq("id", userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (active) setBalance(data ? Number(data.credits_balance) : null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [userId, pathname, tick]);
+
+  return balance;
+}
 
 export function SiteHeader() {
   const { session, loading } = useSession();
   const router = useRouter();
+  const balance = useCreditBalance(session?.user.id);
 
   async function handleSignOut() {
     await createClient().auth.signOut();
@@ -23,7 +62,8 @@ export function SiteHeader() {
           <span className="grid size-7 place-items-center rounded-md bg-primary text-primary-foreground text-xs font-bold">
             VS
           </span>
-          Video Speed Reader
+          {/* Hidden on the narrowest phones so the nav (with the credits pill) fits. */}
+          <span className="hidden min-[420px]:inline">Video Speed Reader</span>
         </Link>
 
         <nav className="flex items-center gap-3 text-sm">
@@ -40,6 +80,15 @@ export function SiteHeader() {
                 className="text-muted-foreground transition-colors hover:text-foreground"
               >
                 Upload / 上傳
+              </Link>
+              <Link
+                href="/credits"
+                title="Your credits — buy more / 你的點數，點擊購買"
+                className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 font-medium tabular-nums transition-colors hover:bg-secondary"
+              >
+                <Coins className="size-4 text-status-bonus-foreground" aria-hidden="true" />
+                {balance ?? "…"}
+                <span className="hidden text-muted-foreground sm:inline">credits · Buy more</span>
               </Link>
               <button
                 onClick={handleSignOut}

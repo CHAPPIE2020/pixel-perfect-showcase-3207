@@ -32,7 +32,7 @@ export default async function Page({
       const session = await getStripe().checkout.sessions.retrieve(sessionId);
       // Only show details for the signed-in user's own checkout.
       if (session.client_reference_id === user.id) {
-        credits = Number(session.metadata?.credits) || null;
+        credits = Number(session.metadata?.["credits"]) || null;
         paymentIntentId =
           typeof session.payment_intent === "string"
             ? session.payment_intent
