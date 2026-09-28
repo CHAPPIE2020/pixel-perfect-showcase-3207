@@ -52,6 +52,8 @@ openai_client = OpenAI(api_key=_secrets["OPENAI_API_KEY"])
 # OpenAI Whisper has a 25 MB file-size limit. 10 minutes of 64 kbps mono mp3 ~= 4.8 MB,
 # safely under the limit. Long videos get split into 600-second chunks.
 CHUNK_SECONDS = 600
+# Give up on a download that hasn't finished in 30 min (slow / hanging sites).
+DOWNLOAD_TIMEOUT_S = 30 * 60
 
 
 def _now() -> str:
@@ -74,7 +76,11 @@ def download_video(url: str, dest_dir: Path) -> Path:
     """yt-dlp for URLs; pass through for local file paths."""
     if url.startswith(("http://", "https://")):
         out_template = str(dest_dir / "video.%(ext)s")
-        subprocess.run(["yt-dlp", "--no-playlist", "-o", out_template, url], check=True)
+        subprocess.run(
+            ["yt-dlp", "--no-playlist", "--socket-timeout", "30", "-o", out_template, url],
+            check=True,
+            timeout=DOWNLOAD_TIMEOUT_S,
+        )
         return next(dest_dir.glob("video.*"))
     return Path(url).expanduser().resolve()
 
@@ -206,9 +212,14 @@ MSG_MEDIA = ("Couldn't read audio from this file — is it a video or audio file
 MSG_TRANSCRIBE = ("The transcription service returned an error. Please try again later. "
                   "/ 轉錄服務發生錯誤，請稍後再試。")
 MSG_UNKNOWN = "Something went wrong while processing this video. / 處理影片時發生錯誤。"
+MSG_DOWNLOAD_TIMEOUT = ("Downloading took longer than 30 minutes, so it was stopped. You were not charged. "
+                        "/ 下載超過 30 分鐘已停止，沒有扣點。")
 
 
 def failure_message(err: BaseException) -> str:
+    if isinstance(err, subprocess.TimeoutExpired):
+        tool = Path(str(err.cmd[0])).name if err.cmd else ""
+        return MSG_DOWNLOAD_TIMEOUT if tool == "yt-dlp" else MSG_UNKNOWN
     if isinstance(err, subprocess.CalledProcessError):
         tool = Path(str(err.cmd[0])).name if err.cmd else ""
         if tool == "yt-dlp":
