@@ -9,6 +9,7 @@ export type JobRow = {
   created_at: string;
   video_source_url: string;
   status: string;
+  errorMessage: string | null;
   summary: string | null;
 };
 
@@ -38,6 +39,7 @@ export function UploadPage({ jobs, loadError }: { jobs: JobRow[]; loadError: str
                   createdLabel: formatDistanceToNowStrict(new Date(job.created_at), { addSuffix: true }),
                   video_source_url: job.video_source_url,
                   status: job.status,
+                  errorMessage: job.errorMessage,
                   summary: job.summary,
                 }))}
               />

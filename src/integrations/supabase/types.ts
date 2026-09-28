@@ -127,6 +127,7 @@ export type Database = {
         Row: {
           created_at: string
           current_session_id: string | null
+          error_message: string | null
           id: string
           language: string
           status: string
@@ -138,6 +139,7 @@ export type Database = {
         Insert: {
           created_at?: string
           current_session_id?: string | null
+          error_message?: string | null
           id?: string
           language?: string
           status?: string
@@ -149,6 +151,7 @@ export type Database = {
         Update: {
           created_at?: string
           current_session_id?: string | null
+          error_message?: string | null
           id?: string
           language?: string
           status?: string

@@ -24,7 +24,7 @@ export default async function Page() {
   const { data, error } = await supabase
     .from("jobs")
     .select(
-      "id, created_at, video_source_url, status, current_session:job_sessions!fk_current_session(summary_content)",
+      "id, created_at, video_source_url, status, error_message, current_session:job_sessions!fk_current_session(summary_content)",
     )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
@@ -37,6 +37,7 @@ export default async function Page() {
       created_at: job.created_at,
       video_source_url: job.video_source_url,
       status: job.status,
+      errorMessage: job.error_message,
       summary: session?.summary_content ?? null,
     };
   });

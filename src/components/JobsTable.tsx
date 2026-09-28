@@ -9,6 +9,7 @@ export type JobTableRow = {
   createdLabel: string; // relative time, computed on the server ("3 minutes ago")
   video_source_url: string;
   status: string;
+  errorMessage: string | null; // why a failed job failed (set by the worker)
   summary: string | null;
 };
 
@@ -18,10 +19,12 @@ const STATUS_STYLES: Record<string, string> = {
   transcribe: "bg-status-active text-status-active-foreground",
   done: "bg-status-done text-status-done-foreground",
   insufficient_credits: "bg-status-blocked text-status-blocked-foreground",
+  failed: "bg-status-blocked text-status-blocked-foreground",
 };
 
 const STATUS_LABELS: Record<string, string> = {
   insufficient_credits: "insufficient credits",
+  failed: "failed / 失敗",
 };
 
 function truncate(text: string, max = 50) {
@@ -102,6 +105,11 @@ export function JobsTable({ jobs }: { jobs: JobTableRow[] }) {
                   </td>
                   <td className="px-5 py-3">
                     <StatusBadge status={job.status} />
+                    {job.status === "failed" && job.errorMessage ? (
+                      <p className="mt-1 max-w-[16rem] text-xs text-status-blocked-foreground">
+                        {job.errorMessage}
+                      </p>
+                    ) : null}
                   </td>
                   <td className="px-5 py-3">
                     {job.status === "done" ? (

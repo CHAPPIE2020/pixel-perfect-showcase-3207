@@ -19,7 +19,9 @@ on exactly those secret names, so no credentials ever live on disk.
 import math
 import os
 import subprocess
+import sys
 import tempfile
+import traceback
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -195,8 +197,52 @@ def transcribe_chunk(chunk_path: Path, language: str) -> str:
         )
 
 
+# Shown to the user under the red "failed" badge. Keep them short and actionable.
+MSG_DOWNLOAD = ("Couldn't download this link — the site blocks server downloads or needs a login "
+                "(e.g. YouTube, Facebook, Google Drive). Use a direct .mp4/.mp3 file URL. "
+                "/ 無法下載此連結，請改用直接的 mp4/mp3 檔案網址。")
+MSG_MEDIA = ("Couldn't read audio from this file — is it a video or audio file? "
+             "/ 無法讀取這個檔案的音訊，請確認它是影片或音訊檔。")
+MSG_TRANSCRIBE = ("The transcription service returned an error. Please try again later. "
+                  "/ 轉錄服務發生錯誤，請稍後再試。")
+MSG_UNKNOWN = "Something went wrong while processing this video. / 處理影片時發生錯誤。"
+
+
+def failure_message(err: BaseException) -> str:
+    if isinstance(err, subprocess.CalledProcessError):
+        tool = Path(str(err.cmd[0])).name if err.cmd else ""
+        if tool == "yt-dlp":
+            return MSG_DOWNLOAD
+        if tool in ("ffmpeg", "ffprobe"):
+            return MSG_MEDIA
+    if type(err).__module__.startswith("openai"):
+        return MSG_TRANSCRIBE
+    return MSG_UNKNOWN
+
+
+# Set once credits have been deducted, so a late error never marks a charged job 'failed'.
+_charged = False
+
+
 def main() -> None:
     job_id = os.environ["JOB_ID"]
+    try:
+        process(job_id)
+    except Exception as err:  # noqa: BLE001 — any crash must end in a visible terminal state
+        traceback.print_exc()
+        try:
+            if _charged:
+                update_job(job_id, status="done")
+            else:
+                update_job(job_id, status="failed", error_message=failure_message(err))
+                print(f"[{job_id}] failed — {type(err).__name__} (not charged)", flush=True)
+        except Exception:  # noqa: BLE001
+            traceback.print_exc()
+        sys.exit(1)
+
+
+def process(job_id: str) -> None:
+    global _charged
     job = get_job(job_id)
     session_id = job["current_session_id"]
 
@@ -239,6 +285,7 @@ def main() -> None:
         update_session(session_id, subtitle_txt_content=full_text)
         # M2: charge only now that the transcript is saved; then mark done.
         new_balance = charge_credits(job, minutes)
+        _charged = True
         update_job(job_id, status="done")
 
     print(f"[{job_id}] done — {len(full_text)} chars, charged {minutes} cr, "
