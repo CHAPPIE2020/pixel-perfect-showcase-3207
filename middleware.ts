@@ -34,7 +34,8 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Skip static assets and images.
-    "/((?!_next/static|_next/image|favicon.ico|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    // Skip static assets, images, and the Stripe webhook (machine-to-machine:
+    // no user cookie, and the raw body must reach the route untouched).
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|api/stripe/webhook|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };
